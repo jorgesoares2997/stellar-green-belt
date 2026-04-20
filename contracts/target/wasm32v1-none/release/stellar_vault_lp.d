@@ -1,0 +1,1 @@
+/Users/jorgesoares/Desktop/projects/stellar-green-belt/contracts/target/wasm32v1-none/release/stellar_vault_lp.wasm: /Users/jorgesoares/Desktop/projects/stellar-green-belt/contracts/liquidity_pool/src/lib.rs

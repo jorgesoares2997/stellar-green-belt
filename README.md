@@ -38,26 +38,45 @@ We use **GitHub Actions** to ensure every change meets production standards:
 
 ---
 
-## 🛠️ Setup & Local Development
+## 🛠️ Step-by-Step Deployment Guide
 
-### Prerequisites
-- [Rust & Cargo](https://rustup.rs/)
-- [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup#install-the-soroban-cli)
-- [Node.js v18+](https://nodejs.org/)
+### 1. Prerequisites & Environment
+Ensure you have the following installed:
+- [Rust & WASM Target](https://rustup.rs/): `rustup target add wasm32-unknown-unknown`
+- [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup#install-the-soroban-cli): `cargo install --locked soroban-cli`
+- [Node.js & pnpm](https://pnpm.io/installation): `npm install -g pnpm`
 
-### Quick Start
-1. **Clone the repo**
-2. **Build Contracts**
-   ```bash
-   cd contracts
-   cargo build --target wasm32-unknown-unknown --release
-   ```
-3. **Launch Frontend**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+### 2. Build & Deploy Smart Contracts
+First, compile the contracts to WASM:
+```bash
+cd contracts
+cargo build --target wasm32-unknown-unknown --release
+```
+
+Deploy the contracts to the Stellar Testnet:
+```bash
+# 1. Deploy the Liquidity Pool (Yield Source)
+stellar contract deploy \
+  --wasm target/wasm32v1-none/release/stellar_vault_lp.wasm \
+  --source deployer --network testnet
+
+# 2. Deploy the Vault (User Interface)
+stellar contract deploy \
+  --wasm target/wasm32v1-none/release/stellar_vault.wasm \
+  --source deployer --network testnet
+
+# 3. Initialize the contracts using the Stellar CLI invoke command
+```
+
+### 3. Configure & Launch Frontend
+1. Update the contract IDs in `frontend/lib/stellar.ts` with your newly deployed addresses.
+2. Install dependencies and start the dev server:
+```bash
+cd frontend
+pnpm install
+pnpm run dev
+```
+3. Open `http://localhost:3000` and connect your Freighter wallet (ensure it's on Testnet).
 
 ---
 
