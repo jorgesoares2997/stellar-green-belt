@@ -1,4 +1,5 @@
 import { server, VAULT_CONTRACT_ID } from './stellar';
+import { Address, xdr, scValToNative } from '@stellar/stellar-sdk';
 
 export type ContractEvent = {
   id: string;
@@ -8,12 +9,24 @@ export type ContractEvent = {
   timestamp: number;
 };
 
+type SorobanEvent = {
+  id?: string;
+  pagingToken?: string;
+  ledger?: number;
+  ledgerClosedAt?: string;
+  contractId?: string;
+  topic?: unknown[];
+  value?: unknown;
+};
+
 export async function fetchLatestEvents(): Promise<ContractEvent[]> {
   try {
-    // Polling Soroban RPC for contract events
-    // Filters for our specific Vault contract
+    const latestLedger = await server.getLatestLedger();
+    const startLedger = Math.max(1, (latestLedger.sequence ?? 1) - 1000);
+
     const response = await server.getEvents({
-      startLedger: 0, // In production, track this ledger-by-ledger
+      startLedger,
+      limit: 25,
       filters: [
         {
           type: "contract",
@@ -22,24 +35,93 @@ export async function fetchLatestEvents(): Promise<ContractEvent[]> {
       ],
     });
 
-    return response.events.map((e: any) => ({
-      id: e.id,
-      type: "Vault Action",
-      user: e.contractId.slice(0, 4) + "..." + e.contractId.slice(-4),
-      amount: "Parsed from XDR", 
-      timestamp: Date.now(),
-    }));
+    return (response.events as SorobanEvent[])
+      .map((event) => toContractEvent(event))
+      .filter((event): event is ContractEvent => event !== null)
+      .sort((a, b) => b.timestamp - a.timestamp);
   } catch (error) {
-    console.warn("Event fetch skipped (Testnet RPC connection needed)");
+    console.warn("Failed to fetch Soroban contract events", error);
     return [];
   }
 }
 
-// Simple event simulator for the demo UI
-export function getMockEvents(): ContractEvent[] {
-  return [
-    { id: '1', type: 'Deposit', user: 'GC...3k', amount: '500 USDC', timestamp: Date.now() },
-    { id: '2', type: 'Yield Harvest', user: 'Vault', amount: '12.5 USDC', timestamp: Date.now() - 5000 },
-    { id: '3', type: 'Withdraw', user: 'GA...8p', amount: '200 USDC', timestamp: Date.now() - 15000 },
-  ];
+function toContractEvent(event: SorobanEvent): ContractEvent | null {
+  const topic = Array.isArray(event.topic) ? event.topic : [];
+  const action = parseSymbol(topic[0]) ?? "Vault Action";
+  const rawUser = parseAddress(topic[1]);
+  const amount = parseI128(event.value);
+  const timestamp = event.ledgerClosedAt ? Date.parse(event.ledgerClosedAt) : Date.now();
+
+  return {
+    id: event.id ?? `${event.ledger ?? 0}-${event.pagingToken ?? Math.random().toString(36)}`,
+    type: normalizeAction(action),
+    user: truncateAddress(rawUser ?? event.contractId ?? "unknown"),
+    amount: amount === null ? "Unknown amount" : `${formatTokenAmount(amount)} USDC`,
+    timestamp: Number.isNaN(timestamp) ? Date.now() : timestamp,
+  };
+}
+
+function parseSymbol(value: unknown): string | null {
+  const scVal = asScVal(value);
+  if (!scVal || scVal.switch().name !== "scvSymbol") return null;
+  return scVal.sym().toString();
+}
+
+function parseAddress(value: unknown): string | null {
+  const scVal = asScVal(value);
+  if (!scVal) return null;
+
+  try {
+    if (scVal.switch().name === "scvAddress") {
+      return Address.fromScVal(scVal).toString();
+    }
+  } catch {
+    return null;
+  }
+
+  return null;
+}
+
+function parseI128(value: unknown): bigint | null {
+  const scVal = asScVal(value);
+  if (!scVal || scVal.switch().name !== "scvI128") return null;
+  const native = scValToNative(scVal);
+  return typeof native === "bigint" ? native : null;
+}
+
+function asScVal(value: unknown): xdr.ScVal | null {
+  if (!value) return null;
+
+  if (value instanceof xdr.ScVal) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    try {
+      return xdr.ScVal.fromXDR(value, "base64");
+    } catch {
+      return null;
+    }
+  }
+
+  return null;
+}
+
+function normalizeAction(action: string): string {
+  if (action === "deposit") return "Deposit";
+  if (action === "withdraw") return "Withdraw";
+  return action.charAt(0).toUpperCase() + action.slice(1);
+}
+
+function formatTokenAmount(amount: bigint): string {
+  const stroopsPerUnit = BigInt(10_000_000);
+  const whole = amount / stroopsPerUnit;
+  const fraction = amount % stroopsPerUnit;
+  const fractionStr = fraction.toString().padStart(7, "0").replace(/0+$/, "");
+  return fractionStr ? `${whole.toString()}.${fractionStr}` : whole.toString();
+}
+
+function truncateAddress(address: string): string {
+  if (address.length <= 10) return address;
+  return `${address.slice(0, 4)}...${address.slice(-4)}`;
 }
