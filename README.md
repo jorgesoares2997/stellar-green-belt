@@ -46,30 +46,75 @@ Ensure you have the following installed:
 - [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup#install-the-soroban-cli): `cargo install --locked soroban-cli`
 - [Node.js & pnpm](https://pnpm.io/installation): `npm install -g pnpm`
 
-### 2. Build & Deploy Smart Contracts
+### 2. Build, Deploy, and Initialize Smart Contracts (Testnet)
 First, compile the contracts to WASM:
 ```bash
 cd contracts
-cargo build --target wasm32-unknown-unknown --release
+stellar contract build
 ```
 
-Deploy the contracts to the Stellar Testnet:
+Deploy LP and Vault contracts, and save IDs in shell variables:
 ```bash
-# 1. Deploy the Liquidity Pool (Yield Source)
-stellar contract deploy \
+# 1) Deploy Liquidity Pool (Yield Source)
+LP_ID=$(stellar contract deploy \
   --wasm target/wasm32v1-none/release/stellar_vault_lp.wasm \
-  --source deployer --network testnet
+  --source deployer \
+  --network testnet)
+echo "LP_ID=$LP_ID"
 
-# 2. Deploy the Vault (User Interface)
-stellar contract deploy \
+# 2) Deploy Vault (User entrypoint)
+VAULT_ID=$(stellar contract deploy \
   --wasm target/wasm32v1-none/release/stellar_vault.wasm \
-  --source deployer --network testnet
+  --source deployer \
+  --network testnet)
+echo "VAULT_ID=$VAULT_ID"
+```
 
-# 3. Initialize the contracts using the Stellar CLI invoke command
+Get a valid Soroban token contract ID for native XLM on Testnet (do not use `asset deploy` here, as native SAC already exists):
+```bash
+TOKEN_ID=$(stellar contract id asset \
+  --asset native \
+  --network testnet)
+echo "TOKEN_ID=$TOKEN_ID"
+```
+
+Initialize LP first, then Vault:
+```bash
+# 3) Initialize LP with token
+stellar contract invoke \
+  --id "$LP_ID" \
+  --source deployer \
+  --network testnet \
+  -- initialize \
+  --token "$TOKEN_ID"
+
+# 4) Initialize Vault with token + LP
+stellar contract invoke \
+  --id "$VAULT_ID" \
+  --source deployer \
+  --network testnet \
+  -- initialize \
+  --token "$TOKEN_ID" \
+  --lp_contract "$LP_ID"
+```
+
+Optional verification:
+```bash
+stellar contract invoke \
+  --id "$VAULT_ID" \
+  --source deployer \
+  --network testnet \
+  -- get_lp_address
 ```
 
 ### 3. Configure & Launch Frontend
-1. Update the contract IDs in `frontend/lib/stellar.ts` with your newly deployed addresses.
+1. Update `frontend/.env.local` with your deployed values:
+```bash
+NEXT_PUBLIC_VAULT_CONTRACT_ID=<VAULT_ID>
+NEXT_PUBLIC_TOKEN_CONTRACT_ID=<TOKEN_ID>
+NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org
+NEXT_PUBLIC_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+```
 2. Install dependencies and start the dev server:
 ```bash
 cd frontend
