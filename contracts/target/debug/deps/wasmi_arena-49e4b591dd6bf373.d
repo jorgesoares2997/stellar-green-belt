@@ -1,0 +1,10 @@
+/Users/jorgesoares/Desktop/projects/stellar-green-belt/contracts/target/debug/deps/wasmi_arena-49e4b591dd6bf373.d: /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/lib.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/component_vec.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/dedup.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/guarded.rs
+
+/Users/jorgesoares/Desktop/projects/stellar-green-belt/contracts/target/debug/deps/libwasmi_arena-49e4b591dd6bf373.rlib: /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/lib.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/component_vec.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/dedup.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/guarded.rs
+
+/Users/jorgesoares/Desktop/projects/stellar-green-belt/contracts/target/debug/deps/libwasmi_arena-49e4b591dd6bf373.rmeta: /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/lib.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/component_vec.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/dedup.rs /Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/guarded.rs
+
+/Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/lib.rs:
+/Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/component_vec.rs:
+/Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/dedup.rs:
+/Users/jorgesoares/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasmi_arena-0.4.1/src/guarded.rs:
