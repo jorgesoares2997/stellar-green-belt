@@ -1,6 +1,8 @@
 import { rpc, Networks as StellarNetworks, TransactionBuilder, Address, Operation, nativeToScVal } from '@stellar/stellar-sdk';
 
 // Environment Variables with fallbacks
+// NOTE: These fallback contract IDs are for local/dev safety only.
+// Production deployments should always provide explicit NEXT_PUBLIC_* values.
 export const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || "https://soroban-testnet.stellar.org";
 export const NETWORK_PASSPHRASE = process.env.NEXT_PUBLIC_NETWORK_PASSPHRASE || StellarNetworks.TESTNET;
 
