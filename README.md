@@ -1,68 +1,86 @@
-# 🛡️ StellarVault: Advanced Yield-Bearing Vault
+# StellarVault
 
-StellarVault is a production-ready Soroban dApp built for the **Stellar Green Belt**. It demonstrates advanced smart contract mechanics, inter-contract communication, and real-time event streaming.
+[![StellarVault CI](https://github.com/jorgesoares2997/stellar-green-belt/actions/workflows/ci.yml/badge.svg)](https://github.com/jorgesoares2997/stellar-green-belt/actions/workflows/ci.yml)
 
----
+StellarVault is a Soroban-based DeFi vault demo for Stellar Green Belt. Users deposit tokens into a Vault contract, the Vault performs an inter-contract call into a Liquidity Pool contract, and the frontend provides wallet-driven interactions with live activity updates from RPC events.
 
-## 🎯 Project Overview
-StellarVault allows users to deposit underlying assets (like USDC) into a secure "Smart Vault." The Vault then automatically interacts with a Liquidity Pool contract to deploy those assets, earning yield for the users in a completely decentralized manner.
+## Live Demo
 
-### Key Features
-- **Inter-Contract Calls**: The Vault contract dynamically interacts with the Liquidity Pool.
-- **Real-Time Activity**: Live event streaming for all on-chain actions.
-- **Premium UX**: Mobile-first, high-end DeFi dashboard.
-- **Production DevOps**: Automated CI/CD for both contracts and frontend.
+- Frontend: [https://stellar-green-belt-frontend.vercel.app/](https://stellar-green-belt-frontend.vercel.app/)
 
----
+## Mobile Responsive Screenshot
 
-## 🏗️ Technical Architecture
+![Mobile responsive preview](docs/images/mobile-responsive.png)
 
-### Smart Contracts (`/contracts`)
-- **Vault (`/vault`)**: The entry point for users. Handles share accounting and inter-contract logic.
-- **Liquidity Pool (`/liquidity_pool`)**: The "Yield Engine" that manages the underlying assets.
-- **Inter-Contract Interface**: Uses a Trait-based client for flexible and safe calls.
+## Why This Project Exists
 
-### Frontend (`/frontend`)
-- **Next.js 15**: Leveraging the App Router for optimal performance.
-- **Tailwind CSS**: Custom "Space & Glass" theme for a premium feel.
-- **Stellar Wallets Kit**: Unified interface for Freighter and other wallets.
-- **Framer Motion**: Smooth micro-animations for enhanced engagement.
+- Demonstrate Soroban inter-contract architecture in a realistic dApp flow.
+- Show end-to-end execution from wallet signature to on-chain event display.
+- Provide a submission-ready reference for Green Belt requirements.
 
----
+## Tech Stack
 
-## 🔁 CI/CD Pipeline
-We use **GitHub Actions** to ensure every change meets production standards:
-- ✅ **Contract Check**: Cargo clippy, format, and unit tests.
-- ✅ **Build Check**: WASM compilation and Next.js production build.
-- ✅ **Frontend Lint**: ESLint and TypeScript type checking.
+- Smart contracts: Rust + Soroban SDK
+- Blockchain tooling: Stellar CLI (`stellar contract ...`)
+- Frontend: Next.js (App Router) + React + TypeScript
+- UI: Tailwind CSS + Framer Motion + Lucide Icons
+- Wallet integration: `@creit.tech/stellar-wallets-kit` (Freighter, Albedo, xBull optional)
+- RPC + contract interaction: `@stellar/stellar-sdk`
+- CI/CD: GitHub Actions
+- Hosting: Vercel
 
----
+## Repository Structure
 
-## 🛠️ Step-by-Step Deployment Guide
+```text
+contracts/
+  vault/
+  liquidity_pool/
+frontend/
+docs/images/
+.github/workflows/
+```
 
-### 1. Prerequisites & Environment
-Ensure you have the following installed:
-- [Rust & WASM Target](https://rustup.rs/): `rustup target add wasm32-unknown-unknown`
-- [Soroban CLI](https://soroban.stellar.org/docs/getting-started/setup#install-the-soroban-cli): `cargo install --locked soroban-cli`
-- [Node.js & pnpm](https://pnpm.io/installation): `npm install -g pnpm`
+## Contract and Network Information (Testnet)
 
-### 2. Build, Deploy, and Initialize Smart Contracts (Testnet)
-First, compile the contracts to WASM:
+- Vault contract address: `CAJENIP3WDODNG2I2WA2FIRYLJK3HNSX4PVW2OTAERGTKKEUEZKSCXB7`
+- Liquidity Pool contract address: `CDZTASXSOXDR4ULNTFL6P74DMPZOYHFKSRRYROXZTT7WD2BJS6RWXEI2`
+- Token contract address (native SAC): `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
+
+### Related Transaction Hashes
+
+- LP deploy tx: `0a053785a5db658a8da24065bc024cac1fac048098dc35b52597d86883ebd9ed`
+- Vault deploy tx: `ea54f6b40e91dbaa390367c05ec08532c0031135157955e2f90c165e395adb57`
+- Inter-contract call tx sample (vault -> liquidity pool deposit): `93cd8bb1f5173d2011148aa958ea98d0b4510c39804c44598e617013b34f2b0b`
+
+## Local Setup
+
+### Prerequisites
+
+- Rust + wasm target:
+  ```bash
+  rustup target add wasm32-unknown-unknown
+  ```
+- Stellar CLI
+- Node.js 20+ and pnpm
+
+### 1) Build Contracts
+
 ```bash
 cd contracts
 stellar contract build
 ```
 
-Deploy LP and Vault contracts, and save IDs in shell variables:
+### 2) Deploy and Initialize on Testnet
+
 ```bash
-# 1) Deploy Liquidity Pool (Yield Source)
+cd contracts
+
 LP_ID=$(stellar contract deploy \
   --wasm target/wasm32v1-none/release/stellar_vault_lp.wasm \
   --source deployer \
   --network testnet)
 echo "LP_ID=$LP_ID"
 
-# 2) Deploy Vault (User entrypoint)
 VAULT_ID=$(stellar contract deploy \
   --wasm target/wasm32v1-none/release/stellar_vault.wasm \
   --source deployer \
@@ -70,7 +88,8 @@ VAULT_ID=$(stellar contract deploy \
 echo "VAULT_ID=$VAULT_ID"
 ```
 
-Get a valid Soroban token contract ID for native XLM on Testnet (do not use `asset deploy` here, as native SAC already exists):
+Get native SAC token contract id:
+
 ```bash
 TOKEN_ID=$(stellar contract id asset \
   --asset native \
@@ -78,9 +97,9 @@ TOKEN_ID=$(stellar contract id asset \
 echo "TOKEN_ID=$TOKEN_ID"
 ```
 
-Initialize LP first, then Vault:
+Initialize LP then Vault:
+
 ```bash
-# 3) Initialize LP with token
 stellar contract invoke \
   --id "$LP_ID" \
   --source deployer \
@@ -88,7 +107,6 @@ stellar contract invoke \
   -- initialize \
   --token "$TOKEN_ID"
 
-# 4) Initialize Vault with token + LP
 stellar contract invoke \
   --id "$VAULT_ID" \
   --source deployer \
@@ -99,6 +117,7 @@ stellar contract invoke \
 ```
 
 Optional verification:
+
 ```bash
 stellar contract invoke \
   --id "$VAULT_ID" \
@@ -107,44 +126,99 @@ stellar contract invoke \
   -- get_lp_address
 ```
 
-### 3. Configure & Launch Frontend
-1. Update `frontend/.env.local` with your deployed values:
+### 3) Configure Frontend
+
+Create/update `frontend/.env.local`:
+
 ```bash
 NEXT_PUBLIC_VAULT_CONTRACT_ID=<VAULT_ID>
 NEXT_PUBLIC_TOKEN_CONTRACT_ID=<TOKEN_ID>
 NEXT_PUBLIC_RPC_URL=https://soroban-testnet.stellar.org
 NEXT_PUBLIC_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
 ```
-2. Install dependencies and start the dev server:
+
+### 4) Run Frontend
+
 ```bash
 cd frontend
 pnpm install
 pnpm run dev
 ```
-3. Open `http://localhost:3000` and connect your Freighter wallet (ensure it's on Testnet).
+
+Open `http://localhost:3000`.
+
+## Vercel Deployment (CLI)
+
+```bash
+cd frontend
+vercel login
+vercel link
+```
+
+Set env vars in Vercel:
+
+```bash
+vercel env add NEXT_PUBLIC_VAULT_CONTRACT_ID production
+vercel env add NEXT_PUBLIC_TOKEN_CONTRACT_ID production
+vercel env add NEXT_PUBLIC_RPC_URL production
+vercel env add NEXT_PUBLIC_NETWORK_PASSPHRASE production
+```
+
+Deploy:
+
+```bash
+vercel --prod
+```
+
+Important Vercel settings:
+
+- Root Directory: `frontend`
+- Framework Preset: `Next.js`
+- Build Command: `pnpm build`
+- Output Directory: default (empty), or `.next`
+
+## CI/CD
+
+GitHub Actions workflow: `.github/workflows/ci.yml`
+
+- Contracts job:
+  - `cargo clippy`
+  - `cargo test`
+  - WASM build
+- Frontend job:
+  - install deps
+  - lint
+  - production build
+
+## Production-Readiness Notes
+
+- Use `.env`-driven contract IDs and network values only (avoid hardcoded fallbacks in real deployments).
+- Keep wallet module loading resilient (xBull optional; Freighter/Albedo should still work).
+- Ensure all contract init addresses are aligned (`token`, `lp_contract`) before frontend testing.
+- Deposit path validated with successful on-chain transaction hash (listed above).
+
+## Commit History Quality Check
+
+- Current history contains 8+ commits and mostly follows conventional prefixes (`feat`, `fix`, `chore`, `update`).
+- Recommended improvements (for future commits):
+  - Prefer `docs:` over `update:` for documentation changes.
+  - Keep each commit scoped, e.g.:
+    - `docs: add Green Belt deployment verification section`
+    - `fix(frontend): prepare soroban tx before wallet signing`
+    - `chore(ci): align frontend build cache with package manager`
+
+## Green Belt Checklist Mapping
+
+- [x] Project overview
+- [x] Tech stack
+- [x] Local setup instructions
+- [x] Live demo link
+- [x] Mobile responsive screenshot
+- [x] CI/CD badge
+- [x] Contract addresses (vault + LP)
+- [x] Token/liquidity address section
+- [x] Final successful inter-contract transaction hash
 
 ---
 
-## 📊 Deliverables Checklist
-- [x] Core Contract (Vault)
-- [x] Inter-Contract Call (Vault -> Pool)
-- [x] Event Streaming Logic
-- [x] Next.js Frontend
-- [x] CI/CD Pipeline
-- [x] Comprehensive Documentation
-
----
-
-## 🧩 Conventional Commits Summary
-- `feat: initialize soroban workspace and project structure`
-- `feat: implement liquidity pool contract with yield logic`
-- `feat: implement vault contract with inter-contract calls`
-- `fix: resolve rust lifetimes and import warnings`
-- `feat: scaffold next.js frontend with tailwind`
-- `feat: build premium dashboard UI with framer-motion`
-- `feat: implement event streaming and stellar-sdk utilities`
-- `chore: setup github actions ci pipeline`
-
----
-
-**Developed for the Stellar Green Belt Challenge.**
+Built for Stellar Green Belt submission.
